@@ -1,0 +1,35 @@
+{
+  "thematic_labels": {
+    "description": "Mental health condition categories",
+    "labels": ["Normal", "Depression", "Suicidal", "Anxiety", "Bipolar", "Stress", "Personality Disorder"],
+    "colors": {
+      "Normal": "#10b981",
+      "Depression": "#6366f1",
+      "Suicidal": "#dc2626",
+      "Anxiety": "#f59e0b",
+      "Bipolar": "#8b5cf6",
+      "Stress": "#ea580c",
+      "Personality Disorder": "#ec4899"
+    }
+  },
+  "severity": {
+    "description": "Severity scale 1-5 (derived from thematic label)",
+    "mapping": {
+      "Normal": 1,
+      "Stress": 3,
+      "Anxiety": 3,
+      "Personality Disorder": 2,
+      "Bipolar": 4,
+      "Depression": 4,
+      "Suicidal": 5
+    },
+    "scale": {
+      "1": "Minimal — No intervention needed",
+      "2": "Mild — Monitor and self-care",
+      "3": "Moderate — Consider talking to someone",
+      "4": "High — Early warning: seek support",
+      "5": "Critical — Immediate professional help recommended"
+    },
+    "alert_threshold": 4
+  }
+}

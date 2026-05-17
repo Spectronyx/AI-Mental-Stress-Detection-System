@@ -1,0 +1,13 @@
+backend/venv
+backend/db.sqlite3
+backend/__pycache__
+backend/node_modules
+frontend/node_modules
+frontend/dist
+.git
+.gitignore
+README.md
+*.csv
+backend/Suicide_Detection.csv
+backend/saved_models/*
+!backend/saved_models/.gitkeep
