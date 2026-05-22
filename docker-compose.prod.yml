@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # ---- PostgreSQL Database ----
+  db:
+    image: postgres:15-alpine
+    container_name: mindsense_db_prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-stressdb}
+      POSTGRES_USER: ${POSTGRES_USER:-stress_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-securepassword}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-stress_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---- Redis Cache ----
+  redis:
+    image: redis:7-alpine
+    container_name: mindsense_redis_prod
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---- Django Backend ----
+  backend:
+    image: ${DOCKERHUB_USERNAME}/nlp-project-backend:latest
+    container_name: mindsense_backend_prod
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.production
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-change-this-in-production-please}
+      POSTGRES_DB: ${POSTGRES_DB:-stressdb}
+      POSTGRES_USER: ${POSTGRES_USER:-stress_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-securepassword}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      REDIS_URL: redis://redis:6379/0
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
+      CORS_ALLOW_ALL: "true"
+      ML_DEFAULT_MODEL: ${ML_DEFAULT_MODEL:-lstm}
+      ML_ALERT_THRESHOLD: ${ML_ALERT_THRESHOLD:-4}
+      ML_LLM_ENABLED: ${ML_LLM_ENABLED:-false}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    volumes:
+      - ./backend/saved_models:/app/saved_models
+      - media_data:/app/media
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py collectstatic --noinput &&
+             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120"
+
+  # ---- React Frontend ----
+  frontend:
+    image: ${DOCKERHUB_USERNAME}/nlp-project-frontend:latest
+    container_name: mindsense_frontend_prod
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  postgres_data:
+  redis_data:
+  media_data:
